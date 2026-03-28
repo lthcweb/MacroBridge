@@ -327,12 +327,12 @@ AIRNodePtr RazerParser::parse()
     }
 
     if (m_version == RazerSynapseVersion::Synapse3 && macro->tag != "RazerMacro") {
-        error("RazerPlugin3 期望根节点 <RazerMacro>，请确认是否选择了 Synapse 4 插件");
+        error("Razer3Plugin 期望根节点 <RazerMacro>，请确认是否选择了 Synapse 4 插件");
         return nullptr;
     }
 
     if (m_version == RazerSynapseVersion::Synapse4 && macro->tag != "Macro") {
-        error("RazerPlugin4 期望根节点 <Macro>，请确认是否选择了 Synapse 3 插件");
+        error("Razer4Plugin 期望根节点 <Macro>，请确认是否选择了 Synapse 3 插件");
         return nullptr;
     }
 
@@ -385,13 +385,13 @@ AIRNodePtr RazerParser::buildSequence(const XmlNode& macroEvents)
 
         if (m_version == RazerSynapseVersion::Synapse3) {
             if (event.tag == "MacroEvent") {
-                error("RazerPlugin3 不支持 <MacroEvent> 结构，请改用 RazerPlugin4");
+                error("Razer3Plugin 不支持 <MacroEvent> 结构，请改用 Razer4Plugin");
                 return nullptr;
             }
             node = buildLegacyEvent(event);
         } else if (m_version == RazerSynapseVersion::Synapse4) {
             if (event.tag != "MacroEvent") {
-                error("RazerPlugin4 仅支持 <MacroEvent> 结构，请改用 RazerPlugin3");
+                error("Razer4Plugin 仅支持 <MacroEvent> 结构，请改用 Razer3Plugin");
                 return nullptr;
             }
             node = buildMacroEvent(event);

@@ -3,7 +3,7 @@
 # 雷蛇插件：解析和生成雷蛇 Synapse XML 格式宏。
 
 add_plugin(
-    NAME    RazerPlugin3
+    NAME    Razer3Plugin
     SOURCES
         RazerPlugin3.cpp
         RazerParser.cpp
@@ -12,7 +12,7 @@ add_plugin(
 )
 
 add_plugin(
-    NAME    RazerPlugin4
+    NAME    Razer4Plugin
     SOURCES
         RazerPlugin4.cpp
         RazerParser.cpp

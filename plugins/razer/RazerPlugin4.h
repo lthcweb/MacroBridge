@@ -3,18 +3,18 @@
 #include "AIR.h"
 
 #ifdef _WIN32
-#  ifdef RAZERPLUGIN4_EXPORTS
-#    define RAZERPLUGIN4_API __declspec(dllexport)
+#  ifdef RAZER4PLUGIN_EXPORTS
+#    define RAZER4PLUGIN_API __declspec(dllexport)
 #  else
-#    define RAZERPLUGIN4_API __declspec(dllimport)
+#    define RAZER4PLUGIN_API __declspec(dllimport)
 #  endif
 #else
-#  define RAZERPLUGIN4_API __attribute__((visibility("default")))
+#  define RAZER4PLUGIN_API __attribute__((visibility("default")))
 #endif
 
 extern "C" {
-    RAZERPLUGIN4_API AIR::IScriptPlugin* CreateRazerPlugin4();
-    RAZERPLUGIN4_API void DestroyRazerPlugin4(AIR::IScriptPlugin* plugin);
-    RAZERPLUGIN4_API AIR::IScriptPlugin* CreatePlugin();
-    RAZERPLUGIN4_API void DestroyPlugin(AIR::IScriptPlugin* plugin);
+    RAZER4PLUGIN_API AIR::IScriptPlugin* CreateRazer4Plugin();
+    RAZER4PLUGIN_API void DestroyRazer4Plugin(AIR::IScriptPlugin* plugin);
+    RAZER4PLUGIN_API AIR::IScriptPlugin* CreatePlugin();
+    RAZER4PLUGIN_API void DestroyPlugin(AIR::IScriptPlugin* plugin);
 }
