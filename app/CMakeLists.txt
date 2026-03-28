@@ -48,7 +48,7 @@ set(APP_SOURCES
 add_executable(${PROJECT_NAME} WIN32 ${APP_SOURCES} ${APP_HEADERS})
 # WIN32 表示不弹出控制台窗口（GUI 程序）；
 # 调试阶段若想看控制台输出，可临时改为：
-#   add_executable(MacroConverter ${APP_SOURCES})
+#   add_executable(MacroBridge ${APP_SOURCES})
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
@@ -106,8 +106,8 @@ target_compile_options(${PROJECT_NAME}  PRIVATE /wd4702) # 无法访问的代码
 # ── 同步皮肤资源 ─────────────────────────────────────────────────────────────
 # 1. 设置路径（利用 CMAKE_BINARY_DIR 对应 JSON 中的路径）
 set(SKIN_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/skin")
-# 这里直接硬编码到你观察到的 bin/Debug 目录
-set(SKIN_TARGET_DIR "${CMAKE_BINARY_DIR}/bin/Debug/skin")
+# 按当前构建配置自动解析到目标程序输出目录（Debug/Release 等）
+set(SKIN_TARGET_DIR "$<TARGET_FILE_DIR:${PROJECT_NAME}>/skin")
 
 # 2. 获取所有源文件列表，用于精确对比时间戳
 file(GLOB_RECURSE SKIN_FILES "${SKIN_SOURCE_DIR}/*")
@@ -131,6 +131,4 @@ add_custom_target(sync_skins ALL
 # 4. 让主程序依赖这个同步目标
 # 这样即使 C++ 没变，只要点击生成 MacroBridge，就会先运行 sync_skins
 add_dependencies(MacroBridge sync_skins)
-
-
 

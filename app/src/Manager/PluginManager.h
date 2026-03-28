@@ -39,11 +39,14 @@
 //  PluginEntry：一个已加载的插件条目
 // ============================================================================
 namespace {
+using DestroyPluginFn = void (*)(AIR::IScriptPlugin*);
+
 struct PluginEntry {
     std::string             path;       // DLL 完整路径
     std::string             name;       // GetFormatName() 返回值
     std::string             extension;  // GetFileExtension() 返回值
     AIR::IScriptPlugin*     plugin = nullptr;
+    DestroyPluginFn         destroyFn = nullptr;
 
 #ifdef _WIN32
     HMODULE                 hModule = nullptr;

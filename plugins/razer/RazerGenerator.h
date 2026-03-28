@@ -29,6 +29,7 @@
 #pragma once
 
 #include "AIR.h"
+#include "RazerFormat.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -60,7 +61,8 @@ struct FlatEvent {
 
 class RazerGenerator : public AIR::IAIRVisitor {
 public:
-    explicit RazerGenerator(std::vector<AIR::AIRDiagnostic>& diags);
+    explicit RazerGenerator(std::vector<AIR::AIRDiagnostic>& diags,
+                            RazerSynapseVersion version = RazerSynapseVersion::Synapse4);
 
     // 获取生成的 XML 字符串
     std::string result() const;
@@ -130,4 +132,5 @@ private:
     std::string                      m_macroName;
     std::string                      m_macroGuid;
     std::vector<AIR::AIRDiagnostic>& m_diags;
+    RazerSynapseVersion              m_version;
 };

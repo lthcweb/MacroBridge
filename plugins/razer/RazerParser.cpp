@@ -16,8 +16,9 @@ using namespace AIR;
 // ============================================================================
 
 RazerParser::RazerParser(const std::string& xmlSource,
-                         std::vector<AIRDiagnostic>& diags)
-    : m_source(xmlSource), m_diags(diags)
+                         std::vector<AIRDiagnostic>& diags,
+                         RazerSynapseVersion version)
+    : m_source(xmlSource), m_diags(diags), m_version(version)
 {
 }
 
@@ -307,14 +308,32 @@ AIRNodePtr RazerParser::parse()
         return nullptr;
     }
 
-    // 找到 <Macro> 根节点
+    // 找到根节点（Synapse 3/4 根标签不同）
     const XmlNode* macro = &root;
-    if (root.tag != "Macro") {
-        macro = root.child("Macro");
-        if (!macro) {
-            error("未找到 <Macro> 根节点，请检查文件格式");
-            return nullptr;
+    if (root.tag != "Macro" && root.tag != "RazerMacro") {
+        if (m_version == RazerSynapseVersion::Synapse3) {
+            macro = root.child("RazerMacro");
+        } else if (m_version == RazerSynapseVersion::Synapse4) {
+            macro = root.child("Macro");
+        } else {
+            macro = root.child("Macro");
+            if (!macro) macro = root.child("RazerMacro");
         }
+    }
+
+    if (!macro || (macro->tag != "Macro" && macro->tag != "RazerMacro")) {
+        error("未找到有效根节点：Synapse 3 需要 <RazerMacro>，Synapse 4 需要 <Macro>");
+        return nullptr;
+    }
+
+    if (m_version == RazerSynapseVersion::Synapse3 && macro->tag != "RazerMacro") {
+        error("Razer3Plugin 期望根节点 <RazerMacro>，请确认是否选择了 Synapse 4 插件");
+        return nullptr;
+    }
+
+    if (m_version == RazerSynapseVersion::Synapse4 && macro->tag != "Macro") {
+        error("Razer4Plugin 期望根节点 <Macro>，请确认是否选择了 Synapse 3 插件");
+        return nullptr;
     }
 
     return buildProgram(*macro);
@@ -348,6 +367,9 @@ AIRNodePtr RazerParser::buildProgram(const XmlNode& macroRoot)
                                    true /* passthrough */);
 
     auto body = buildSequence(*events);
+    if (!body) {
+        return nullptr;
+    }
     hotkey->addChild(std::move(body));
     program->addChild(std::move(hotkey));
 
@@ -359,8 +381,27 @@ AIRNodePtr RazerParser::buildSequence(const XmlNode& macroEvents)
     auto seq = SequenceNode::make();
 
     for (const XmlNode& event : macroEvents.children) {
-        if (event.tag != "MacroEvent") continue;
-        auto node = buildMacroEvent(event);
+        AIRNodePtr node;
+
+        if (m_version == RazerSynapseVersion::Synapse3) {
+            if (event.tag == "MacroEvent") {
+                error("Razer3Plugin 不支持 <MacroEvent> 结构，请改用 Razer4Plugin");
+                return nullptr;
+            }
+            node = buildLegacyEvent(event);
+        } else if (m_version == RazerSynapseVersion::Synapse4) {
+            if (event.tag != "MacroEvent") {
+                error("Razer4Plugin 仅支持 <MacroEvent> 结构，请改用 Razer3Plugin");
+                return nullptr;
+            }
+            node = buildMacroEvent(event);
+        } else {
+            if (event.tag == "MacroEvent") {
+                node = buildMacroEvent(event);
+            } else {
+                node = buildLegacyEvent(event);
+            }
+        }
         if (node) seq->addChild(std::move(node));
     }
 
@@ -439,6 +480,91 @@ AIRNodePtr RazerParser::buildMacroEvent(const XmlNode& event)
         return RawNode::make("<!-- UnknownMacroEvent Type=" +
                              std::to_string(type) + " -->");
     }
+}
+
+AIRNodePtr RazerParser::buildLegacyEvent(const XmlNode& event)
+{
+    // 旧版样式（例如 RazerPlugin demo）：
+    // <MacroEvents>
+    //   <MouseButtonEvent><Type>1|2</Type><Button>1</Button></MouseButtonEvent>
+    //   <MouseMovementEvent><Type>3</Type><X>..</X><Y>..</Y><Delay>..</Delay></MouseMovementEvent>
+    //   <DelayEvent><Delay>..</Delay></DelayEvent>
+    // </MacroEvents>
+
+    if (event.tag == "DelayEvent") {
+        int delay = event.child_int("Delay", 0);
+        return delay > 0 ? SleepNode::make(delay) : nullptr;
+    }
+
+    if (event.tag == "MouseButtonEvent") {
+        int type = event.child_int("Type", 0);
+        int delay = event.child_int("Delay", 0);
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+
+        AIRKey key = RazerKeyMap::RazerMouseButtonToAIR(event.child_int("Button", 1));
+        if (type == 1) {
+            seq->addChild(MouseDownNode::make(key));
+        } else if (type == 2) {
+            seq->addChild(MouseUpNode::make(key));
+        } else {
+            warn("旧格式 MouseButtonEvent 的 Type 既不是 1(Down) 也不是 2(Up)，已跳过");
+            return nullptr;
+        }
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    if (event.tag == "KeyboardEvent") {
+        int type = event.child_int("Type", 0);
+        int delay = event.child_int("Delay", 0);
+        std::string keyStr = event.child_text("Key");
+        if (keyStr.empty()) {
+            warn("旧格式 KeyboardEvent 缺少 <Key>，已跳过");
+            return nullptr;
+        }
+
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+
+        AIRKey key = RazerKeyMap::RazerKeyToAIR(keyStr);
+        if (type == 1) {
+            seq->addChild(KeyDownNode::make(key, keyStr));
+        } else if (type == 2) {
+            seq->addChild(KeyUpNode::make(key, keyStr));
+        } else {
+            warn("旧格式 KeyboardEvent 的 Type 既不是 1(Down) 也不是 2(Up)，已跳过");
+            return nullptr;
+        }
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    if (event.tag == "MouseMovementEvent") {
+        int type = event.child_int("Type", 3);
+        if (type != 3) {
+            warn("旧格式 MouseMovementEvent 的 Type 不是 3，按移动事件继续解析");
+        }
+
+        int delay = event.child_int("Delay", 0);
+        int x = event.child_int("X", 0);
+        int y = event.child_int("Y", 0);
+
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+        auto moveNode = MouseMoveNode::make(CoordType::CoordAbsolute);
+        moveNode->addChild(ExprNumberNode::make(x));
+        moveNode->addChild(ExprNumberNode::make(y));
+        seq->addChild(std::move(moveNode));
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    // 兼容场景：非事件标签直接忽略（如注释、未知字段）
+    return nullptr;
 }
 
 // ── 鼠标移动序列 ─────────────────────────────────────────────────────────────
