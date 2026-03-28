@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Window size="1000,700" caption="0,0,0,35" mininfo="800,600">
+    <VBox name="main_root_container" bkcolor="#FF252526" padding="10,10,10,10">
+        <HBox height="40" childmargin="10">
+            <Label text="MacroBridge - 跨平台宏转换工具" textcolor="#FFFFFFFF" font="1" width="300" />
+            <Control /> <Button name="main_title_btn_minimize" text="-" width="30" />
+            <Button name="main_title_btn_close" text="x" width="30" />
+        </HBox>
+
+        <HBox spacing="10">
+            <VBox name="left_panel" bkcolor="#FF1E1E1E" bordercolor="#FF3E3E42" bordersize="1" padding="10,10,10,10">
+                <HBox height="35" childmargin="5">
+                    <Label text="源宏类型:" width="70" textcolor="#FFCCCCCC" />
+                    <Combo name="combo_source_type" width="150" height="25" bkcolor="#FF333337" textcolor="#FFFFFFFF">
+                        <ListLabelElement text="Logitech (Lua)" selected="true" />
+                        <ListLabelElement text="AutoHotkey (AHK)" />
+                        <ListLabelElement text="Raw AIR (JSON)" />
+                    </Combo>
+                </HBox>
+                <Label text="源代码 (Source Code):" height="25" textcolor="#FF888888" />
+                <RichEdit name="edit_source_code" vscrollbar="true" autovscroll="true" multiline="true" 
+                          wantreturn="true" bkcolor="#FF1E1E1E" textcolor="#FFDCDCAA" 
+                          bordercolor="#FF3E3E42" bordersize="1" margin="0,5,0,0" />
+            </VBox>
+
+            <VBox width="60" childalign="center" spacing="20">
+                <Control height="150" />
+                <Button name="btn_convert" text="转换 ==>" width="60" height="40" bkcolor="#FF007ACC" textcolor="#FFFFFFFF" />
+                <Button name="btn_clear" text="重置" width="60" height="30" bkcolor="#FF444444" textcolor="#FFFFFFFF" />
+            </VBox>
+
+            <VBox name="right_panel" bkcolor="#FF1E1E1E" bordercolor="#FF3E3E42" bordersize="1" padding="10,10,10,10">
+                <HBox height="35" childmargin="5">
+                    <Label text="目标类型:" width="70" textcolor="#FFCCCCCC" />
+                    <Combo name="combo_target_type" width="150" height="25" bkcolor="#FF333337" textcolor="#FFFFFFFF">
+                        <ListLabelElement text="Razer (XML)" selected="true" />
+                        <ListLabelElement text="Bloody (A4Tech)" />
+                        <ListLabelElement text="Raw AIR (JSON)" />
+                    </Combo>
+                </HBox>
+                <Label text="目标代码 (Target Code):" height="25" textcolor="#FF888888" />
+                <RichEdit name="edit_target_code" vscrollbar="true" autovscroll="true" multiline="true" 
+                          readonly="true" bkcolor="#FF1E1E1E" textcolor="#FF9CDCFE" 
+                          bordercolor="#FF3E3E42" bordersize="1" margin="0,5,0,0" />
+            </VBox>
+        </HBox>
+
+        <HBox height="40" margin="0,10,0,0" childmargin="10">
+            <Label name="label_status" text="就绪" textcolor="#FF888888" width="400" />
+            <Control />
+            <Button name="btn_import" text="导入源文件" width="100" height="30" />
+            <Button name="btn_export" text="导出目标文件" width="100" height="30" bkcolor="#FF007ACC" />
+        </HBox>
+    </VBox>
+</Window>

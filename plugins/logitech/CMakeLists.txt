@@ -1,0 +1,12 @@
+# plugins/Logitech/CMakeLists.txt
+#
+# 雷蛇插件：解析和生成雷蛇 Synapse XML 格式宏。
+
+add_plugin(
+    NAME    LogitechPlugin
+    SOURCES
+        LogitechPlugin.cpp
+        LogitechParser.cpp
+        LogitechGenerator.cpp
+        LogitechKeyMap.cpp
+)
