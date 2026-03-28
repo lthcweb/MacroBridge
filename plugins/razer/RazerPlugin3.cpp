@@ -10,7 +10,7 @@ BOOL APIENTRY DllMain(HMODULE, DWORD, LPVOID) { return TRUE; }
 
 class RazerPlugin3 : public AIR::IScriptPlugin {
 public:
-    const char* GetFormatName() const override { return "RazerPlugin3"; }
+    const char* GetFormatName() const override { return "Razer3Plugin"; }
     const char* GetFileExtension() const override { return ".xml"; }
     const char* GetPluginVersion() const override { return "3.0.0"; }
     const char* GetDemoCode() const override {
@@ -42,8 +42,8 @@ public:
 };
 
 extern "C" {
-RAZERPLUGIN3_API AIR::IScriptPlugin* CreateRazerPlugin3() { return new RazerPlugin3(); }
-RAZERPLUGIN3_API void DestroyRazerPlugin3(AIR::IScriptPlugin* plugin) { delete plugin; }
-RAZERPLUGIN3_API AIR::IScriptPlugin* CreatePlugin() { return new RazerPlugin3(); }
-RAZERPLUGIN3_API void DestroyPlugin(AIR::IScriptPlugin* plugin) { delete plugin; }
+RAZER3PLUGIN_API AIR::IScriptPlugin* CreateRazer3Plugin() { return new RazerPlugin3(); }
+RAZER3PLUGIN_API void DestroyRazer3Plugin(AIR::IScriptPlugin* plugin) { delete plugin; }
+RAZER3PLUGIN_API AIR::IScriptPlugin* CreatePlugin() { return new RazerPlugin3(); }
+RAZER3PLUGIN_API void DestroyPlugin(AIR::IScriptPlugin* plugin) { delete plugin; }
 }

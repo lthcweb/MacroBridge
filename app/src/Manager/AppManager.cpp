@@ -88,7 +88,7 @@ void AppManager::TrimProcessMemory()
 }
 void AppManager::LoadPlugins()
 {
-	int count = PluginManager::GetInstance().loadAll(); // 扫描 exe 同目录下所有 *Plugin*.dll
+	int count = PluginManager::GetInstance().loadAll(); // 扫描 exe 同目录下所有 *Plugin.dll
 	std::cout << "已加载插件数量: " << count << "\n";
 
 	for (const auto& entry : PluginManager::GetInstance().plugins()) {
