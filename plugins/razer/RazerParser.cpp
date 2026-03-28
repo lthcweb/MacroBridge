@@ -309,10 +309,13 @@ AIRNodePtr RazerParser::parse()
 
     // 找到 <Macro> 根节点
     const XmlNode* macro = &root;
-    if (root.tag != "Macro") {
+    if (root.tag != "Macro" && root.tag != "RazerMacro") {
         macro = root.child("Macro");
         if (!macro) {
-            error("未找到 <Macro> 根节点，请检查文件格式");
+            macro = root.child("RazerMacro");
+        }
+        if (!macro) {
+            error("未找到 <Macro>/<RazerMacro> 根节点，请检查文件格式");
             return nullptr;
         }
     }
@@ -359,8 +362,14 @@ AIRNodePtr RazerParser::buildSequence(const XmlNode& macroEvents)
     auto seq = SequenceNode::make();
 
     for (const XmlNode& event : macroEvents.children) {
-        if (event.tag != "MacroEvent") continue;
-        auto node = buildMacroEvent(event);
+        AIRNodePtr node;
+
+        if (event.tag == "MacroEvent") {
+            node = buildMacroEvent(event);
+        } else {
+            // 兼容旧格式：MacroEvents 下直接挂 MouseButtonEvent/MouseMovementEvent/DelayEvent
+            node = buildLegacyEvent(event);
+        }
         if (node) seq->addChild(std::move(node));
     }
 
@@ -439,6 +448,91 @@ AIRNodePtr RazerParser::buildMacroEvent(const XmlNode& event)
         return RawNode::make("<!-- UnknownMacroEvent Type=" +
                              std::to_string(type) + " -->");
     }
+}
+
+AIRNodePtr RazerParser::buildLegacyEvent(const XmlNode& event)
+{
+    // 旧版样式（例如 RazerPlugin demo）：
+    // <MacroEvents>
+    //   <MouseButtonEvent><Type>1|2</Type><Button>1</Button></MouseButtonEvent>
+    //   <MouseMovementEvent><Type>3</Type><X>..</X><Y>..</Y><Delay>..</Delay></MouseMovementEvent>
+    //   <DelayEvent><Delay>..</Delay></DelayEvent>
+    // </MacroEvents>
+
+    if (event.tag == "DelayEvent") {
+        int delay = event.child_int("Delay", 0);
+        return delay > 0 ? SleepNode::make(delay) : nullptr;
+    }
+
+    if (event.tag == "MouseButtonEvent") {
+        int type = event.child_int("Type", 0);
+        int delay = event.child_int("Delay", 0);
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+
+        AIRKey key = RazerKeyMap::RazerMouseButtonToAIR(event.child_int("Button", 1));
+        if (type == 1) {
+            seq->addChild(MouseDownNode::make(key));
+        } else if (type == 2) {
+            seq->addChild(MouseUpNode::make(key));
+        } else {
+            warn("旧格式 MouseButtonEvent 的 Type 既不是 1(Down) 也不是 2(Up)，已跳过");
+            return nullptr;
+        }
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    if (event.tag == "KeyboardEvent") {
+        int type = event.child_int("Type", 0);
+        int delay = event.child_int("Delay", 0);
+        std::string keyStr = event.child_text("Key");
+        if (keyStr.empty()) {
+            warn("旧格式 KeyboardEvent 缺少 <Key>，已跳过");
+            return nullptr;
+        }
+
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+
+        AIRKey key = RazerKeyMap::RazerKeyToAIR(keyStr);
+        if (type == 1) {
+            seq->addChild(KeyDownNode::make(key, keyStr));
+        } else if (type == 2) {
+            seq->addChild(KeyUpNode::make(key, keyStr));
+        } else {
+            warn("旧格式 KeyboardEvent 的 Type 既不是 1(Down) 也不是 2(Up)，已跳过");
+            return nullptr;
+        }
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    if (event.tag == "MouseMovementEvent") {
+        int type = event.child_int("Type", 3);
+        if (type != 3) {
+            warn("旧格式 MouseMovementEvent 的 Type 不是 3，按移动事件继续解析");
+        }
+
+        int delay = event.child_int("Delay", 0);
+        int x = event.child_int("X", 0);
+        int y = event.child_int("Y", 0);
+
+        auto seq = SequenceNode::make();
+        if (delay > 0) seq->addChild(SleepNode::make(delay));
+        auto moveNode = MouseMoveNode::make(CoordType::CoordAbsolute);
+        moveNode->addChild(ExprNumberNode::make(x));
+        moveNode->addChild(ExprNumberNode::make(y));
+        seq->addChild(std::move(moveNode));
+
+        if (seq->children.size() == 1) return std::move(seq->children[0]);
+        return seq;
+    }
+
+    // 兼容场景：非事件标签直接忽略（如注释、未知字段）
+    return nullptr;
 }
 
 // ── 鼠标移动序列 ─────────────────────────────────────────────────────────────

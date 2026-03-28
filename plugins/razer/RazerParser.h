@@ -81,6 +81,7 @@ private:
     AIR::AIRNodePtr buildProgram(const XmlNode& macroRoot);
     AIR::AIRNodePtr buildSequence(const XmlNode& macroEvents);
     AIR::AIRNodePtr buildMacroEvent(const XmlNode& event);
+    AIR::AIRNodePtr buildLegacyEvent(const XmlNode& event);
     AIR::AIRNodePtr buildMouseMovement(const XmlNode& movement,
                                        int            initialDelay);
     AIR::AIRNodePtr buildKeyboardEvent(const XmlNode& event, bool isDown);
