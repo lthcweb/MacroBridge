@@ -95,60 +95,9 @@ void AppManager::LoadPlugins()
 		std::cout << "  [" << entry.name << "]"
 			<< "  扩展名: " << entry.extension
 			<< "  Parse: " << (entry.canParse() ? "Y" : "N")
-			<< "  Generate: " << (entry.canGenerate() ? "Y" : "N")
-			<< "\n";
+				<< "  Generate: " << (entry.canGenerate() ? "Y" : "N")
+				<< "\n";
 	}
-
-	// ── 演示转换流程（控制台测试用，UI 实现后删除）────────────────────────────
-	// 假设已有一个 .ahk 文件内容：
-	const std::string ahkSource = R"(
-; 这是一个简单的 AHK 脚本示例，演示了热键和鼠标操作
-~LButton::
-{
-    while (GetKeyState("LButton", "P")) {
-        MouseMove 0, 3, 0, "R"
-        Sleep Random(20, 30)
-    }
-}
-)";
-
-	auto* ahkPlugin = PluginManager::GetInstance().findByExtension(".ahk");
-	if (ahkPlugin) {
-		std::vector<AIR::AIRDiagnostic> diags;
-
-		// Parse：AHK 文本 → AIR 树
-		auto airRoot = ahkPlugin->Parse(ahkSource, diags);
-		if (airRoot) {
-			std::cout << "\n[Parse 成功] 诊断数量: " << diags.size() << "\n";
-
-			// Generate：AIR 树 → AHK 文本（往返测试）
-			diags.clear();
-			std::string output = ahkPlugin->Generate(*airRoot, diags);
-			std::cout << "\n[Generate 输出]\n" << output << "\n";
-
-			// Razer 测试
-			auto* razerPlugin = PluginManager::GetInstance().findByExtension(".xml");
-			output = razerPlugin->Generate(*airRoot, diags);
-			std::cout << "\n[Generate 输出]\n" << output << "\n";
-
-			// Logitech 测试
-			auto* logiPlugin = PluginManager::GetInstance().findByExtension(".lua");
-			output = logiPlugin->Generate(*airRoot, diags);
-			std::cout << "\n[Generate 输出]\n" << output << "\n";
-
-		}
-		else {
-			std::cout << "[Parse 失败]\n";
-			for (const auto& d : diags)
-				std::cout << "  ERROR: " << d.message << "\n";
-		}
-	}
-
-	// ── 启动 UI（待 DuiLib 集成后替换以下代码）────────────────────────────────
-/*	MessageBoxW(nullptr,
-		L"MacroBridge\n插件加载完成，UI 待实现。",
-		L"MacroBridge",
-		MB_OK | MB_ICONINFORMATION);*/
 }
 void AppManager::LoadMainWin()
 {

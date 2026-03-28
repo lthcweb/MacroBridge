@@ -18,7 +18,6 @@
 //  工厂函数类型（与各插件头文件中的声明一致）
 // ============================================================================
 using CreatePluginFn  = AIR::IScriptPlugin* (*)();
-using DestroyPluginFn = void (*)(AIR::IScriptPlugin*);
 
 // ============================================================================
 //  exeDir()：获取 exe 所在目录
@@ -130,6 +129,7 @@ bool PluginManager::loadOne(const std::string& dllPath)
     entry.name      = plugin->GetFormatName();
     entry.extension = plugin->GetFileExtension();
     entry.plugin    = plugin;
+    entry.destroyFn = destroyFn;
     entry.hModule   = hMod;
 
     m_plugins.push_back(std::move(entry));
@@ -153,14 +153,17 @@ void PluginManager::unloadAll()
     for (auto& entry : m_plugins) {
         if (entry.plugin && entry.hModule) {
             // 通过 DLL 的 DestroyPlugin 销毁实例（确保在同一堆上释放）
-            auto destroyFn = reinterpret_cast<DestroyPluginFn>(
-                GetProcAddress(entry.hModule, "DestroyPlugin"));
-            if (destroyFn)
-                destroyFn(entry.plugin);
+            if (entry.destroyFn)
+                entry.destroyFn(entry.plugin);
+            entry.plugin = nullptr;
             FreeLibrary(entry.hModule);
+            entry.hModule = nullptr;
         }
     }
 #endif
+
+    m_sourcePlugin = nullptr;
+    m_targetPlugin = nullptr;
     m_plugins.clear();
 }
 

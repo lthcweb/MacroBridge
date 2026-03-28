@@ -1,9 +1,9 @@
-# MacroConverter  —  项目结构与构建说明
+# MacroBridge  —  项目结构与构建说明
 
 ## 完整目录树
 
 ```
-MacroConverter/
+MacroBridge/
 │
 ├── CMakeLists.txt                  ← 根 CMake（全局设置、子目录调度）
 │
@@ -52,11 +52,11 @@ MacroConverter/
 build/
 ├── bin/
 │   ├── Debug/
-│   │   ├── MacroConverter.exe      ← 主程序
+│   │   ├── MacroBridge.exe         ← 主程序
 │   │   ├── AhkPlugin.dll           ← AHK 插件
 │   │   └── RazerPlugin.dll         ← 雷蛇插件
 │   └── Release/
-│       ├── MacroConverter.exe
+│       ├── MacroBridge.exe
 │       ├── AhkPlugin.dll
 │       └── RazerPlugin.dll
 └── lib/
@@ -72,7 +72,7 @@ build/
 
 ```bash
 # 1. 克隆或解压项目
-cd MacroConverter
+cd MacroBridge
 
 # 2. 配置（Visual Studio 2022）
 cmake -B build -G "Visual Studio 17 2022" -A x64
@@ -84,10 +84,10 @@ cmake --build build --config Debug
 cmake --build build --config Release
 
 # 5. 运行
-build/bin/Debug/MacroConverter.exe
+build/bin/Debug/MacroBridge.exe
 ```
 
-也可以直接用 VS 打开 `build/MacroConverter.sln`。
+也可以直接用 VS 打开 `build/MacroBridge.sln`。
 
 ---
 
