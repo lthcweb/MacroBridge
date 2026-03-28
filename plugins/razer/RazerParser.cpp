@@ -16,8 +16,9 @@ using namespace AIR;
 // ============================================================================
 
 RazerParser::RazerParser(const std::string& xmlSource,
-                         std::vector<AIRDiagnostic>& diags)
-    : m_source(xmlSource), m_diags(diags)
+                         std::vector<AIRDiagnostic>& diags,
+                         RazerSynapseVersion version)
+    : m_source(xmlSource), m_diags(diags), m_version(version)
 {
 }
 
@@ -307,17 +308,32 @@ AIRNodePtr RazerParser::parse()
         return nullptr;
     }
 
-    // 找到 <Macro> 根节点
+    // 找到根节点（Synapse 3/4 根标签不同）
     const XmlNode* macro = &root;
     if (root.tag != "Macro" && root.tag != "RazerMacro") {
-        macro = root.child("Macro");
-        if (!macro) {
+        if (m_version == RazerSynapseVersion::Synapse3) {
             macro = root.child("RazerMacro");
+        } else if (m_version == RazerSynapseVersion::Synapse4) {
+            macro = root.child("Macro");
+        } else {
+            macro = root.child("Macro");
+            if (!macro) macro = root.child("RazerMacro");
         }
-        if (!macro) {
-            error("未找到 <Macro>/<RazerMacro> 根节点，请检查文件格式");
-            return nullptr;
-        }
+    }
+
+    if (!macro || (macro->tag != "Macro" && macro->tag != "RazerMacro")) {
+        error("未找到有效根节点：Synapse 3 需要 <RazerMacro>，Synapse 4 需要 <Macro>");
+        return nullptr;
+    }
+
+    if (m_version == RazerSynapseVersion::Synapse3 && macro->tag != "RazerMacro") {
+        error("RazerPlugin3 期望根节点 <RazerMacro>，请确认是否选择了 Synapse 4 插件");
+        return nullptr;
+    }
+
+    if (m_version == RazerSynapseVersion::Synapse4 && macro->tag != "Macro") {
+        error("RazerPlugin4 期望根节点 <Macro>，请确认是否选择了 Synapse 3 插件");
+        return nullptr;
     }
 
     return buildProgram(*macro);
@@ -351,6 +367,9 @@ AIRNodePtr RazerParser::buildProgram(const XmlNode& macroRoot)
                                    true /* passthrough */);
 
     auto body = buildSequence(*events);
+    if (!body) {
+        return nullptr;
+    }
     hotkey->addChild(std::move(body));
     program->addChild(std::move(hotkey));
 
@@ -364,11 +383,24 @@ AIRNodePtr RazerParser::buildSequence(const XmlNode& macroEvents)
     for (const XmlNode& event : macroEvents.children) {
         AIRNodePtr node;
 
-        if (event.tag == "MacroEvent") {
+        if (m_version == RazerSynapseVersion::Synapse3) {
+            if (event.tag == "MacroEvent") {
+                error("RazerPlugin3 不支持 <MacroEvent> 结构，请改用 RazerPlugin4");
+                return nullptr;
+            }
+            node = buildLegacyEvent(event);
+        } else if (m_version == RazerSynapseVersion::Synapse4) {
+            if (event.tag != "MacroEvent") {
+                error("RazerPlugin4 仅支持 <MacroEvent> 结构，请改用 RazerPlugin3");
+                return nullptr;
+            }
             node = buildMacroEvent(event);
         } else {
-            // 兼容旧格式：MacroEvents 下直接挂 MouseButtonEvent/MouseMovementEvent/DelayEvent
-            node = buildLegacyEvent(event);
+            if (event.tag == "MacroEvent") {
+                node = buildMacroEvent(event);
+            } else {
+                node = buildLegacyEvent(event);
+            }
         }
         if (node) seq->addChild(std::move(node));
     }

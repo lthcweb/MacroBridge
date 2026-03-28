@@ -39,7 +39,7 @@ std::string PluginManager::exeDir()
 }
 
 // ============================================================================
-//  loadAll()：扫描目录，加载所有 *Plugin.dll
+//  loadAll()：扫描目录，加载所有 *Plugin*.dll
 // ============================================================================
 
 int PluginManager::loadAll(const std::string& pluginDir)
@@ -51,8 +51,8 @@ int PluginManager::loadAll(const std::string& pluginDir)
         dir += '\\';
 
 #ifdef _WIN32
-    // 枚举目录下所有 *Plugin.dll
-    std::string pattern = dir + "*Plugin.dll";
+    // 枚举目录下所有 *Plugin*.dll（支持 RazerPlugin3 / RazerPlugin4 这类命名）
+    std::string pattern = dir + "*Plugin*.dll";
     WIN32_FIND_DATAA ffd;
     HANDLE hFind = FindFirstFileA(pattern.c_str(), &ffd);
 

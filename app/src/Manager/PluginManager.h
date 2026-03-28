@@ -2,7 +2,7 @@
  * PluginManager.h  —  插件加载与管理
  *
  * 职责：
- *   - 扫描 exe 同目录下所有 *Plugin.dll
+ *   - 扫描 exe 同目录下所有 *Plugin*.dll
  *   - LoadLibrary + GetProcAddress 获取工厂函数
  *   - 统一管理插件生命周期（Create / Destroy）
  *   - 对外暴露插件列表，供 UI 层填充"源格式"/"目标格式"下拉框
@@ -65,7 +65,7 @@ public:
     ~PluginManager() { unloadAll();    }
 
     /**
-     * 扫描指定目录下所有 *Plugin.dll 并加载。
+     * 扫描指定目录下所有 *Plugin*.dll 并加载。
      *
      * @param pluginDir  扫描目录，默认为空字符串（表示 exe 所在目录）
      * @return           成功加载的插件数量

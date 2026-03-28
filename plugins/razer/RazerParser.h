@@ -38,13 +38,15 @@
 #pragma once
 
 #include "AIR.h"
+#include "RazerFormat.h"
 #include <string>
 #include <vector>
 
 class RazerParser {
 public:
     RazerParser(const std::string& xmlSource,
-                std::vector<AIR::AIRDiagnostic>& diags);
+                std::vector<AIR::AIRDiagnostic>& diags,
+                RazerSynapseVersion version = RazerSynapseVersion::Auto);
 
     // 解析 XML，返回 ProgramNode 根节点
     AIR::AIRNodePtr parse();
@@ -93,4 +95,5 @@ private:
 
     std::string                      m_source;
     std::vector<AIR::AIRDiagnostic>& m_diags;
+    RazerSynapseVersion              m_version;
 };
