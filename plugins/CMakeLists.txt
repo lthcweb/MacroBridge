@@ -11,6 +11,7 @@
 
 add_subdirectory(ahk)
 add_subdirectory(razer)
+add_subdirectory(xmouse)
 
 # 待实现：
  add_subdirectory(logitech)
